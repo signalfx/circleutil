@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 )
@@ -99,7 +100,14 @@ func init() {
 func main() {
 	flag.Parse()
 	if err := mainInstance.main(); err != nil {
-		io.WriteString(os.Stderr, err.Error()+"\n")
+		_, err2 := io.WriteString(os.Stderr, err.Error()+"\n")
+		logIfNotNil(err2, "Unable to write err to stderr")
 		os.Exit(1)
+	}
+}
+
+func logIfNotNil(err error, msg string, args ...interface{}) {
+	if err != nil {
+		log.Printf(msg, args...)
 	}
 }
