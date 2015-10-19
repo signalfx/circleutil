@@ -10,6 +10,7 @@ import (
 	"strings"
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
+	"fmt"
 )
 
 type dirFind struct {
@@ -237,7 +238,6 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
 	mainInstance.args = flag.Args()
 	if err := mainInstance.main(); err != nil {
 		_, err2 := io.WriteString(os.Stderr, err.Error()+"\n")
