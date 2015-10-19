@@ -1,92 +1,105 @@
 package main
+
 import (
-	"flag"
-	"os"
-	"fmt"
-	"strconv"
 	"bufio"
-"io"
-"errors"
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"strconv"
 )
 
-type EnvSplit struct {
-	indexEnv string
-	totalEnv string
+type envSplit struct {
+	indexEnv  string
+	totalEnv  string
 	readStdin bool
-	getEnv func(string) (string, bool)
-	out io.Writer
+	getEnv    func(string) (string, bool)
+	out       io.Writer
 }
 
 var errZeroTotal = errors.New("total index value of zero is invalid")
 
-func (e *EnvSplit) main() error {
+func (e *envSplit) indexes() (uint64, uint64, error) {
 	index, exists := e.getEnv(e.indexEnv)
 	if !exists {
-		return fmt.Errorf("Unable to find env var %s", e.indexEnv)
+		return 0, 0, fmt.Errorf("Unable to find env var %s", e.indexEnv)
 	}
 	total, exists := e.getEnv(e.totalEnv)
 	if !exists {
-		return fmt.Errorf("Unable to find env var %s", e.totalEnv)
+		return 0, 0, fmt.Errorf("Unable to find env var %s", e.totalEnv)
 	}
 	indexInt, err := strconv.ParseUint(index, 10, 64)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 	totalInt, err := strconv.ParseUint(total, 10, 64)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 	if totalInt == 0 {
-		return errZeroTotal
+		return 0, 0, errZeroTotal
 	}
 	if indexInt >= totalInt {
-		return fmt.Errorf("invalid index %d >= %d", indexInt, totalInt)
+		return 0, 0, fmt.Errorf("invalid index %d >= %d", indexInt, totalInt)
 	}
+	return indexInt, totalInt, nil
+}
+
+func (e *envSplit) main() error {
+	indexInt, totalInt, err := e.indexes()
+	if err != nil {
+		return err
+	}
+	f := indexesFunc(indexInt, totalInt)
 	if e.readStdin {
 		s := bufio.NewScanner(os.Stdin)
-		index := uint64(0)
 		for s.Scan() {
-			txt := s.Text()
-			if index % totalInt == indexInt {
-				if _, err := io.WriteString(e.out, txt); err != nil {
-					return err
-				}
-				if _, err := io.WriteString(e.out, "\n"); err != nil {
-					return err
-				}
+			if err := f(e.out, s.Text()); err != nil {
+				return err
 			}
-			index++
 		}
 		return s.Err()
 	}
-	for index, s := range flag.Args() {
-		if uint64(index) % totalInt == indexInt {
-			if _, err := io.WriteString(e.out, s); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(e.out, "\n"); err != nil {
-				return err
-			}
+	for _, s := range flag.Args() {
+		if err := f(e.out, s); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-var Main = EnvSplit{
+func indexesFunc(indexInt uint64, totalInt uint64) func(io.Writer, string) error {
+	index := uint64(0)
+	return func(out io.Writer, toWrite string) error {
+		if uint64(index)%totalInt == indexInt {
+			if _, err := io.WriteString(out, toWrite); err != nil {
+				return err
+			}
+			if _, err := io.WriteString(out, "\n"); err != nil {
+				return err
+			}
+		}
+		index++
+		return nil
+	}
+}
+
+var mainInstance = envSplit{
 	getEnv: os.LookupEnv,
-	out: os.Stdout,
+	out:    os.Stdout,
 }
 
 func init() {
-	flag.StringVar(&Main.indexEnv, "index_env", "CIRCLE_NODE_INDEX", "Env name of node index")
-	flag.StringVar(&Main.totalEnv, "total_env", "CIRCLE_NODE_TOTAL", "Env name of node total")
-	flag.BoolVar(&Main.readStdin, "stdin", false, "Read splits from stdin not args")
+	flag.StringVar(&mainInstance.indexEnv, "index_env", "CIRCLE_NODE_INDEX", "Env name of node index")
+	flag.StringVar(&mainInstance.totalEnv, "total_env", "CIRCLE_NODE_TOTAL", "Env name of node total")
+	flag.BoolVar(&mainInstance.readStdin, "stdin", false, "Read splits from stdin not args")
 }
 
 func main() {
 	flag.Parse()
-	if err := Main.main(); err != nil {
-		io.WriteString(os.Stderr, err.Error() + "\n")
+	if err := mainInstance.main(); err != nil {
+		io.WriteString(os.Stderr, err.Error()+"\n")
 		os.Exit(1)
 	}
 }
