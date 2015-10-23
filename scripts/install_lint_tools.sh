@@ -14,9 +14,7 @@ fi
 export GOPATH="$HOME/tmp_gopath"
 
 mkdir -p "$CACHED_LINT_TOOLS_DIR"
-cd "$INSTALL_INTO"
 go get -u github.com/cep21/gobuild
-gobuild install
+"$GOPATH/bin/gobuild" -verbose install
 cp "$GOPATH/bin/*" "$CACHED_LINT_TOOLS_DIR/"
 rm -rf "$GOPATH"
-cd -
