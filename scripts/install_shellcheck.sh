@@ -7,5 +7,5 @@ if [ $? -ne 0 ]; then
 	wget http://ftp.debian.org/debian/pool/main/s/shellcheck/shellcheck_${SHELLCHECK_VERSION}_amd64.deb
 	mkdir "$HOME/shellcheck"
 	dpkg -x shellcheck_${SHELLCHECK_VERSION}_amd64.deb "$HOME/shellcheck"
-	cp "$HOME/shellcheck/bin/shellcheck $CACHED_LINT_TOOLS_DIR"
+	cp "$HOME/shellcheck/bin/shellcheck" "$CACHED_LINT_TOOLS_DIR"
 fi
