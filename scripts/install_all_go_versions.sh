@@ -1,24 +1,29 @@
 #!/bin/bash
-set -x
-set -e
-if [ -z "$CIRCLECI" ]; then
-	echo "Very likely you only want to run this setup step on circleCI"
-	exit 1
+
+# Install versions of go into GO_BIN_INTO
+set -ex
+verify_in_circle
+
+if [ -z "$GO_BIN_INTO" ]; then
+  export GO_BIN_INTO="$HOME/gover"
 fi
 
-export GOINTO="$HOME/gover"
+if [ -z "$GO_DEFAULT_VERSION" ]; then
+  export GO_DEFAULT_VERSION="1.5.1"
+fi
 
-#TODO: Move these checks into vendor?
 install_go_ver() {
-  if [ ! -d "$GOINTO/go$1" ]; then
-    sudo mkdir "$GOINTO/go$1"
-    wget -O - https://storage.googleapis.com/golang/go"$1".linux-amd64.tar.gz | sudo tar -v -C "$GOINTO/go$1" -xzf -
+  if [ ! -d "$GO_BIN_INTO/go$1" ]; then
+    mkdir "$GO_BIN_INTO/go$1"
+    wget -O - https://storage.googleapis.com/golang/go"$1".linux-amd64.tar.gz | tar -v -C "$GO_BIN_INTO/go$1" -xzf -
   fi
 }
 
 [ -d /usr/local/go ] && sudo mv /usr/local/go /usr/local/go_backup
-mkdir -p "$GOINTO"
+mkdir -p "$GO_BIN_INTO"
 install_go_ver 1.5.1
-install_go_ver 1.4.2
+install_go_ver 1.4.3
+install_go_ver 1.3.3
+install_go_ver $GO_DEFAULT_VERSION
 
-ln -s "$GOINTO/go1.5.1/go" "$HOME/go"
+ln -s "$GO_BIN_INTO/go$GO_DEFAULT_VERSION/go" "$HOME/go"

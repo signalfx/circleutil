@@ -5,7 +5,7 @@
   [metalinter.enabled]
     golint = true
     gofmt = true
-    goimports = true
+    goimports = false
     varcheck = true
     aligncheck = true
     gocyclo = true
