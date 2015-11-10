@@ -50,9 +50,7 @@ function copy_local_to_path() {
 
 # Load all docker images inside DOCKER_STORAGE
 function load_docker_images() {
-  for IMG in $DOCKER_STORAGE/*.tar; do
-    docker load -i "$IMG"
-  done
+  find "$DOCKER_STORAGE" -name "*.tar" -exec docker load -i {} \;
 }
 
 # Cache the image $1 into the name $2 inside DOCKER_STORAGE
