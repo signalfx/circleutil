@@ -49,14 +49,16 @@ function copy_local_to_path() {
 }
 
 # Gets the tag we should push a docker image for, assuming we only
-# push 'latest' for branch 'release'
+# push 'latest' for branch 'release'.  Intended for shell capture
 function docker_release_tag() {
   DOCKER_TAG=$(echo "$1" | sed -e 's#.*/##')
   if [ "$DOCKER_TAG" = "latest" ]; then
-    return "latest-branch"
+    echo -n "latest-branch"
+    return
   fi
   if [ "$DOCKER_TAG" = "release" ]; then
-    return "latest"
+    echo -n "latest"
+    return
   fi
-  return "$DOCKER_TAG"
+  echo -n "$DOCKER_TAG"
 }
