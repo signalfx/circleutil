@@ -15,7 +15,7 @@ for GOGET_URL in "$@"; do
   IFS=':' read -ra NAMES <<< "$GOGET_URL"
   clone_repo "https://${NAMES[0]}.git" "$TMP_GOPATH/src/${NAMES[0]}" "${NAMES[1]}"
   (
-    cd "$GOPATH/src/${NAMES[0]}"
+    cd "$TMP_GOPATH/src/${NAMES[0]}"
     GOPATH="$TMP_GOPATH" go install .
   )
 done
