@@ -47,3 +47,16 @@ function copy_local_to_path() {
   mkdir -p "$1"
   rsync -azC --delete ./ "$1"
 }
+
+# Gets the tag we should push a docker image for, assuming we only
+# push 'latest' for branch 'release'
+function docker_release_tag() {
+  DOCKER_TAG=$(echo "$1" | sed -e 's#.*/##')
+  if [ "$DOCKER_TAG" = "latest" ]; then
+    return "latest-branch"
+  fi
+  if [ "$DOCKER_TAG" = "release" ]; then
+    return "latest"
+  fi
+  return "$DOCKER_TAG"
+}

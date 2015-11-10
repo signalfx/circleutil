@@ -3,14 +3,14 @@ set -ex
 verify_in_circle
 
 if [ -z "$TMP_GOPATH" ]; then
-  export TMP_GOPATH="$HOME/gopath_temp"
+  TMP_GOPATH="$HOME/gopath_temp"
 fi
 
 if [ -z "$GOPATH_INTO" ]; then
-  export GOPATH_INTO="$HOME/bin"
+  GOPATH_INTO="$HOME/bin"
 fi
 
-export GOPATH="$HOME/install_gobuild_lints"
+GOPATH="$HOME/install_gobuild_lints"
 for GOGET_URL in "$@"; do
   echo "GOGET_URL is $GOGET_URL"
   IFS=':' read -ra NAMES <<< "$GOGET_URL"
