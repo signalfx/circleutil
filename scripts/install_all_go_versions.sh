@@ -27,4 +27,4 @@ install_go_ver 1.3.3
 install_go_ver $GOLANG_VERSION
 
 mv "$GOROOT" "${GOROOT}_backup" || true
-ln -s "$GO_BIN_INTO/go$GOLANG_VERSION" "$GOROOT"
+ln -s "$GO_BIN_INTO/go$GOLANG_VERSION/go" "$GOROOT"
