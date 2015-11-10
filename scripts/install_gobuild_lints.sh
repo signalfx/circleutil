@@ -12,7 +12,6 @@ if [ -z "$1" ]; then
 fi
 
 export GOPATH="$HOME/install_gobuild_lints"
-mkdir -p "$GOPATH/src/$GOBUILD_PATH"
 clone_repo "https://$GOBUILD_PATH.git" "$GOPATH/src/$GOBUILD_PATH" "$2"
 (
   cd "$GOPATH/src/$GOBUILD_PATH"
