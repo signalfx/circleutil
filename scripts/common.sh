@@ -48,6 +48,18 @@ function copy_local_to_path() {
   rsync -azC --delete ./ "$1"
 }
 
+# Load all docker images inside DOCKER_STORAGE
+function load_docker_images() {
+  for IMG in $DOCKER_STORAGE/*.tar; do
+    docker load -i "$IMG"
+  done
+}
+
+# Cache the image $1 into the name $2 inside DOCKER_STORAGE
+function cache_docker_image() {
+  docker save -o "$DOCKER_STORAGE/$2.tar" "$1"
+}
+
 # Gets the tag we should push a docker image for, assuming we only
 # push 'latest' for branch 'release'.  Intended for shell capture
 function docker_release_tag() {
