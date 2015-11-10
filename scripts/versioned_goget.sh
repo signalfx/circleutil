@@ -11,17 +11,14 @@ if [ -z "$GOPATH_INTO" ]; then
 fi
 
 export GOPATH="$HOME/install_gobuild_lints"
-(
-  cd "$GOPATH/src/$GOBUILD_PATH"
-  go install .
-)
-for PATH in "$@"; do
-  IFS=':' read -ra NAMES <<< "$PATH"
+for GOGET_URL in "$@"; do
+  echo "GOGET_URL is $GOGET_URL"
+  IFS=':' read -ra NAMES <<< "$GOGET_URL"
   clone_repo "https://${NAMES[0]}.git" "$GOPATH/src/${NAMES[0]}" "${NAMES[1]}"
   (
     cd "$GOPATH/src/${NAMES[0]}"
     go install .
   )
 done
-mkdir -p "GOPATH_INTO"
+mkdir -p "$GOPATH_INTO"
 cp "$GOPATH/bin/"* "$GOPATH_INTO/"

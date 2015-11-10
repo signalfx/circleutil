@@ -5,11 +5,11 @@ set -ex
 verify_in_circle
 
 if [ -z "$GO_BIN_INTO" ]; then
-  export GO_BIN_INTO="$HOME/gover"
+  GO_BIN_INTO="$HOME/gover"
 fi
 
-if [ -z "$GO_DEFAULT_VERSION" ]; then
-  export GO_DEFAULT_VERSION="1.5.1"
+if [ -z "$GOLANG_VERSION" ]; then
+  GOLANG_VERSION="1.5.1"
 fi
 
 install_go_ver() {
@@ -24,7 +24,7 @@ mkdir -p "$GO_BIN_INTO"
 install_go_ver 1.5.1
 install_go_ver 1.4.3
 install_go_ver 1.3.3
-install_go_ver $GO_DEFAULT_VERSION
+install_go_ver $GOLANG_VERSION
 
-rm -rf "$HOME/go"
-ln -s "$GO_BIN_INTO/go$GO_DEFAULT_VERSION/go" "$HOME/go"
+mv "$GOROOT" "${GOROOT}_backup" || true
+ln -s "$GO_BIN_INTO/go$GOLANG_VERSION" "$GOROOT"

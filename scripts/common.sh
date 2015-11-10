@@ -5,7 +5,7 @@
 function verify_env() {
   for e in $1;
   do
-    if [ -z "$$e" ]; then
+    if [ -z "${!e}" ]; then
       echo "Cannot find variable $e defined"
       exit 1
     fi
