@@ -3,7 +3,7 @@ set -ex
 verify_in_circle
 
 if [ -z "$GOBUILD_PATH" ]; then
-  export GOBUILD_PATH="https://github.com/cep21/gobuild.git"
+  export GOBUILD_PATH="github.com/cep21/gobuild"
 fi
 
 if [ -z "$1" ]; then
@@ -13,7 +13,7 @@ fi
 
 export GOPATH="$HOME/install_gobuild_lints"
 mkdir -p "$GOPATH/src/$GOBUILD_PATH"
-clone_repo "$GOBUILD_PATH" "$GOPATH/src/$GOBUILD_PATH" "$2"
+clone_repo "https://$GOBUILD_PATH.git" "$GOPATH/src/$GOBUILD_PATH" "$2"
 (
   cd "$GOPATH/src/$GOBUILD_PATH"
   go install .
