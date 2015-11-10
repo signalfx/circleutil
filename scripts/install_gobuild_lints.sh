@@ -7,7 +7,7 @@ if [ -z "$GOBUILD_PATH" ]; then
 fi
 
 if [ -z "$1" ]; then
-  print "Please set the path to copy go binaries into"
+  echo "Please set the path to copy go binaries into"
   exit 1
 fi
 
