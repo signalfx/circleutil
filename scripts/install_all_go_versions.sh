@@ -26,5 +26,5 @@ install_go_ver 1.4.3
 install_go_ver 1.3.3
 install_go_ver $GO_DEFAULT_VERSION
 
-rm -f "$HOME/go"
+rm -rf "$HOME/go"
 ln -s "$GO_BIN_INTO/go$GO_DEFAULT_VERSION/go" "$HOME/go"
