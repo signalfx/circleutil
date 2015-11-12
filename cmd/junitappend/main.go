@@ -246,7 +246,7 @@ func (j *junitAppend) loadFromCirclePrevRun() (*circleTestGetResp, error) {
 	}
 	baseURL := fmt.Sprintf("https://circleci.com/api/v1/project/%s/%s/%d/tests", j.circleUsername, j.circleProject, j.circlePrevBuildNum)
 	log.Printf("Fetching base URL %s\n", baseURL)
-	baseURL = baseURL + "?" + url.QueryEscape(j.circleToken)
+	baseURL = baseURL + "?circle-token=" + url.QueryEscape(j.circleToken)
 	req, err := http.NewRequest("GET", baseURL, nil)
 	if err != nil {
 		return nil, err
