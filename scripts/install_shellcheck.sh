@@ -9,3 +9,4 @@ if [ $? -ne 0 ]; then
   dpkg -x shellcheck_${SHELLCHECK_VERSION}_amd64.deb "$HOME/shellcheck"
   cp "$HOME/shellcheck/usr/bin/shellcheck" "$CACHED_LINT_TOOLS_DIR"
 fi
+which shellcheck
