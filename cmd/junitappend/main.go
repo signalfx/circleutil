@@ -240,12 +240,12 @@ func (j *junitAppend) loadFile() (*testSuites, error) {
 }
 
 func (j *junitAppend) loadFromCirclePrevRun() (*circleTestGetResp, error) {
-	if j.circleUsername == "" || j.circleProject == "" || j.circlePrevBuildNum == 0 {
+	if j.circleUsername == "" || j.circleProject == "" || j.circlePrevBuildNum == 0 || j.circleToken == "" {
 		log.Println("No previous results to fetch")
 		return &circleTestGetResp{}, nil
 	}
 	baseURL := fmt.Sprintf("https://circleci.com/api/v1/project/%s/%s/%d/tests", j.circleUsername, j.circleProject, j.circlePrevBuildNum)
-	log.Println("Fetching base URL %s", baseURL)
+	log.Printf("Fetching base URL %s\n", baseURL)
 	baseURL = baseURL + "?" + url.QueryEscape(j.circleToken)
 	req, err := http.NewRequest("GET", baseURL, nil)
 	if err != nil {
