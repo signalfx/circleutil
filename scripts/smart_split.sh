@@ -24,5 +24,5 @@ do
   END_TIME=$(python -c 'import time;print time.time()')
   TOTAL_TIME=$(python -c 'import sys;print float(sys.argv[2]) - float(sys.argv[1])' "$START_TIME" "$END_TIME")
   junitappend -testname "$line" -testduration "${TOTAL_TIME}s" -failuremsg "$FAILURE_MSG" add
-done < "$(cat | junitappend split)"
+done < <(cat | junitappend split)
 exit $EXIT_CODE
