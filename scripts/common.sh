@@ -105,3 +105,52 @@ function speed_split() {
   done < <(cat | junitappend split)
   return $EXIT_CODE
 }
+
+function install_go_version() {
+  mkdir -p "$1"
+  if [ ! -d "$1/go$2" ]; then
+    mkdir "$1/go$2"
+    wget -O - https://storage.googleapis.com/golang/go"$2".linux-amd64.tar.gz | tar -v -C "$1/go$2" -xzf -
+  fi
+  mv "$GOROOT" "${GOROOT}_backup" || rm "$GOROOT"
+  ln -s "$1/go$2/go" "$GOROOT"
+}
+
+function install_all_go_versions() {
+  install_go_ver "$1" 1.3.3
+  install_go_ver "$1" 1.4.3
+  install_go_ver "$1" 1.5.1
+}
+
+function install_shellcheck() {
+  if [ ! -f "$1/shellcheck" ]; then
+    mkdir -p "$1"
+    SHELLCHECK_VERSION="0.3.7-4"
+    wget http://ftp.debian.org/debian/pool/main/s/shellcheck/shellcheck_${SHELLCHECK_VERSION}_amd64.deb
+    dpkg -x shellcheck_${SHELLCHECK_VERSION}_amd64.deb "/tmp/shellcheck"
+    cp "/tmp/shellcheck/usr/bin/shellcheck" "$1/shellcheck"
+  fi
+  which shellcheck
+}
+
+function versioned_goget() {
+  if [ -z "$TMP_GOPATH" ]; then
+    TMP_GOPATH="/tmp/gopath_temp"
+  fi
+
+  if [ -z "$GOPATH_INTO" ]; then
+    GOPATH_INTO="$HOME/bin"
+  fi
+
+  for GOGET_URL in "$@"; do
+    print_time "GOGET_URL is $GOGET_URL"
+    IFS=':' read -ra NAMES <<< "$GOGET_URL"
+    clone_repo "https://${NAMES[0]}.git" "$TMP_GOPATH/src/${NAMES[0]}" "${NAMES[1]}"
+    (
+      cd "$TMP_GOPATH/src/${NAMES[0]}"
+      GOPATH="$TMP_GOPATH" go install .
+    )
+  done
+  mkdir -p "$GOPATH_INTO"
+  cp "$TMP_GOPATH/bin/"* "$GOPATH_INTO/"
+}
