@@ -111,12 +111,13 @@ function install_all_go_versions() {
 }
 
 function install_shellcheck() {
-  if [ ! -f "$1/shellcheck" ]; then
-    mkdir -p "$1"
+  INSTALL_DIR=${1-$HOME/bin}
+  if [ ! -f "$INSTALL_DIR/shellcheck" ]; then
+    mkdir -p "$INSTALL_DIR"
     SHELLCHECK_VERSION="0.3.7-4"
     wget http://ftp.debian.org/debian/pool/main/s/shellcheck/shellcheck_${SHELLCHECK_VERSION}_amd64.deb
     dpkg -x shellcheck_${SHELLCHECK_VERSION}_amd64.deb "/tmp/shellcheck"
-    cp "/tmp/shellcheck/usr/bin/shellcheck" "$1/shellcheck"
+    cp "/tmp/shellcheck/usr/bin/shellcheck" "$INSTALL_DIR/shellcheck"
   fi
   which shellcheck
 }
