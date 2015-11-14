@@ -96,7 +96,7 @@ function install_go_version() {
     mkdir "$1/go$2"
     wget -O - https://storage.googleapis.com/golang/go"$2".linux-amd64.tar.gz | tar -v -C "$1/go$2" -xzf -
   fi
-  mv "$GOROOT" "${GOROOT}_backup" || rm "$GOROOT"
+  [ -a "$GOROOT" ] && (mv "$GOROOT" "${GOROOT}_backup" || rm "$GOROOT")
   ln -s "$1/go$2/go" "$GOROOT"
 }
 
