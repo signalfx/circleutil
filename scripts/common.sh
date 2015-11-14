@@ -63,21 +63,6 @@ function cache_docker_image() {
   docker save -o "$DOCKER_STORAGE/$2.tar" "$1"
 }
 
-# Gets the tag we should push a docker image for, assuming we only
-# push 'latest' for branch 'release'.  Intended for shell capture
-function docker_release_tag() {
-  DOCKER_TAG=$(echo "$1" | sed -e 's#.*/##')
-  if [ "$DOCKER_TAG" = "latest" ]; then
-    echo -n "latest-branch"
-    return
-  fi
-  if [ "$DOCKER_TAG" = "release" ]; then
-    echo -n "latest"
-    return
-  fi
-  echo -n "$DOCKER_TAG"
-}
-
 # Splits stdin and executes each line.
 # Intended to be used as a subshell with stdin piped in.
 # By doing it as a subshell with stdin piped in rather than xargs I avoid
@@ -131,6 +116,28 @@ function install_shellcheck() {
     cp "/tmp/shellcheck/usr/bin/shellcheck" "$1/shellcheck"
   fi
   which shellcheck
+}
+
+
+# prints out the tag you should use for docker images, only doing "latest"
+# on the release branch, but otherwise using the circle tag or branch as
+# the tag on docker.  Suffix the tag with DOCKER_TAG_SUFFIX if set.
+function docker_tag() {
+  DOCKER_TAG=${DOCKER_TAG-${CIRCLE_TAG-${CIRCLE_BRANCH}}}$DOCKER_TAG_SUFFIX"
+  DOCKER_TAG=$(echo "$DOCKER_TAG" | sed -e 's#.*/##')
+  if [ -z $DOCKER_TAG ]; then
+    echo -n "unknown"
+    return 1 
+  fi
+  if [ "$DOCKER_TAG" = "latest" ]; then
+    echo -n "latest-branch"
+    return
+  fi
+  if [ "$DOCKER_TAG" = "release" ]; then
+    echo -n "latest"
+    return
+  fi
+  echo -n "$DOCKER_TAG"
 }
 
 function versioned_goget() {
