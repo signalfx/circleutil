@@ -123,7 +123,7 @@ function install_shellcheck() {
 # on the release branch, but otherwise using the circle tag or branch as
 # the tag on docker.  Suffix the tag with DOCKER_TAG_SUFFIX if set.
 function docker_tag() {
-  DOCKER_TAG=${DOCKER_TAG-${CIRCLE_TAG-${CIRCLE_BRANCH}}}$DOCKER_TAG_SUFFIX"
+  DOCKER_TAG="${DOCKER_TAG-${CIRCLE_TAG-${CIRCLE_BRANCH}}}$DOCKER_TAG_SUFFIX"
   DOCKER_TAG=$(echo "$DOCKER_TAG" | sed -e 's#.*/##')
   if [ -z $DOCKER_TAG ]; then
     echo -n "unknown"
