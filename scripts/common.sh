@@ -92,7 +92,6 @@ function speed_split() {
 }
 
 function install_go_version() {
-  mkdir -p "$1"
   if [ ! -d "$1/go$2" ]; then
     mkdir "$1/go$2"
     wget -O - https://storage.googleapis.com/golang/go"$2".linux-amd64.tar.gz | tar -v -C "$1/go$2" -xzf -
@@ -102,9 +101,13 @@ function install_go_version() {
 }
 
 function install_all_go_versions() {
-  install_go_ver "$1" 1.3.3
-  install_go_ver "$1" 1.4.3
-  install_go_ver "$1" 1.5.1
+  if [ ! -d "$1" ]; then
+    echo "Unknown directory $1"
+    return 1
+  fi
+  install_go_version "$1" 1.3.3
+  install_go_version "$1" 1.4.3
+  install_go_version "$1" 1.5.1
 }
 
 function install_shellcheck() {
@@ -125,7 +128,7 @@ function install_shellcheck() {
 function docker_tag() {
   DOCKER_TAG="${DOCKER_TAG-${CIRCLE_TAG-${CIRCLE_BRANCH}}}$DOCKER_TAG_SUFFIX"
   DOCKER_TAG=$(echo "$DOCKER_TAG" | sed -e 's#.*/##')
-  if [ -z $DOCKER_TAG ]; then
+  if [ -z "$DOCKER_TAG" ]; then
     echo -n "unknown"
     return 1 
   fi
