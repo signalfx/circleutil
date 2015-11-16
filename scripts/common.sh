@@ -122,6 +122,16 @@ function install_shellcheck() {
   which shellcheck
 }
 
+function install_junitappend() {
+  INSTALL_DIR=${1-$HOME/bin}
+  (
+    cd "$HOME/circleutil/cmd/junitappend"
+    GOPATH="" go build .
+    cp junitappend "$INSTALL_DIR/junitappend"
+    which junitappend
+  )
+}
+
 
 # prints out the tag you should use for docker images, only doing "latest"
 # on the release branch, but otherwise using the circle tag or branch as
