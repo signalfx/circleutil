@@ -137,7 +137,7 @@ function install_circletasker() {
   (
     cd "$HOME/circleutil/cmd/circletasker"
     GOPATH="" go build .
-    cp junitappend "$INSTALL_DIR/circletasker"
+    cp circletasker "$INSTALL_DIR/circletasker"
     which circletasker
   )
 }
