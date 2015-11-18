@@ -132,6 +132,16 @@ function install_junitappend() {
   )
 }
 
+function install_circletasker() {
+  INSTALL_DIR=${1-$HOME/bin}
+  (
+    cd "$HOME/circleutil/cmd/circletasker"
+    GOPATH="" go build .
+    cp junitappend "$INSTALL_DIR/circletasker"
+    which circletasker
+  )
+}
+
 
 # prints out the tag you should use for docker images, only doing "latest"
 # on the release branch, but otherwise using the circle tag or branch as
