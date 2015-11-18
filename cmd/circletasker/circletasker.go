@@ -158,11 +158,11 @@ func (j *circleTasker) flagInit() error {
 		}
 	}
 	j.flags.IntVar(&j.nodeIndex, "node_index", int(nodeIndex), "Index of the node we're building")
-	j.flags.StringVar(&j.sourceHost, "source_host", "node0", "Source host to get information from")
-	j.flags.StringVar(&j.listenHost, "listenhost", "0.0.0.0:2121", "Listen addr if a server")
+	j.flags.StringVar(&j.sourceHost, "source_host", "localhost", "Source host to get information from")
+	j.flags.StringVar(&j.listenHost, "listenhost", "0.0.0.0:12012", "Listen addr if a server")
 	j.flags.DurationVar(&j.client.Timeout, "timeout", time.Second * 30, "Timeout waiting for HTTP responses")
 	j.flags.DurationVar(&j.readyTimeout, "ready_timeout", time.Minute * 5, "Timeout waiting for ready signal")
-	j.flags.IntVar(&j.portNumber, "port", 2121, "Port to use for connections")
+	j.flags.IntVar(&j.portNumber, "port", 12012, "Port to use for connections")
 	j.log = log.New(j.logOut, "[circletasker]", log.LstdFlags)
 	return j.flags.Parse(j.args)
 }
@@ -250,6 +250,7 @@ func (j *circleTasker) ready() error {
 			if time.Now().Sub(now).Nanoseconds() <= j.readyTimeout.Nanoseconds() {
 				continue
 			}
+			return err
 		}
 		defer func() {
 			logIfNotNil(resp.Body.Close(), "cannot close client response body")
