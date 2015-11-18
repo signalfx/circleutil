@@ -163,6 +163,24 @@ function docker_tag() {
   echo -n "$DOCKER_TAG"
 }
 
+function circletasker_execute() {
+  if [ "$CIRCLE_NODE_INDEX" != "0" ]; then
+    ssh -M -S "my-ctrl-socket$CIRCLE_NODE_INDEX" -fnNT -4 -L 12012:localhost:12012 node0
+    ssh -S "my-ctrl-socket$CIRCLE_NODE_INDEX" -O check node0
+  fi
+  circletasker ready
+  TOCHECK=$(circletasker next)
+  while [ ! -z "$TOCHECK" ]; do
+    $1 "$TOCHECK"
+    TOCHECK=$(circletasker next)
+  done
+  if [ "$CIRCLE_NODE_INDEX" == "0" ]; then
+    wait
+  else
+    ssh -S "my-ctrl-socket$CIRCLE_NODE_INDEX" -O exit node0
+  fi
+}
+
 function versioned_goget() {
   if [ -z "$TMP_GOPATH" ]; then
     TMP_GOPATH="/tmp/gopath_temp"
