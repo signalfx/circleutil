@@ -170,8 +170,9 @@ function circletasker_execute() {
   fi
   circletasker ready
   TOCHECK=$(circletasker next)
+  RET_CODE="0"
   while [ ! -z "$TOCHECK" ]; do
-    $1 "$TOCHECK"
+    $1 "$TOCHECK" || RET_CODE="$?"
     TOCHECK=$(circletasker next)
   done
   if [ "$CIRCLE_NODE_INDEX" == "0" ]; then
@@ -179,6 +180,7 @@ function circletasker_execute() {
   else
     ssh -S "my-ctrl-socket$CIRCLE_NODE_INDEX" -O exit node0
   fi
+  return $RET_CODE
 }
 
 function versioned_goget() {
