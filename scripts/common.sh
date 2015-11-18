@@ -142,7 +142,6 @@ function install_circletasker() {
   )
 }
 
-
 # prints out the tag you should use for docker images, only doing "latest"
 # on the release branch, but otherwise using the circle tag or branch as
 # the tag on docker.  Suffix the tag with DOCKER_TAG_SUFFIX if set.

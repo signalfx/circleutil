@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type circleTasker struct {
@@ -28,6 +29,7 @@ type circleTasker struct {
 	nodeIndex  int
 	sourceHost string
 	listenHost string
+	readyTimeout time.Duration
 	client     http.Client
 	listening  chan struct{}
 	out        io.Writer
@@ -45,6 +47,7 @@ type splitServer struct {
 	haveToldDone  map[int]struct{}
 	doneWaitGroup sync.WaitGroup
 	mu            sync.Mutex
+	indexIsReady map[int]struct{}
 }
 
 const sourceIndexHeader = "X-index"
@@ -64,6 +67,18 @@ func (s *splitServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if index < 0 || index >= int64(s.maxClientIndex) {
 		s.log.Printf("Invalid index %d", index)
 		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if req.Method == "HEAD" {
+		_, alreadyTold := s.indexIsReady[int(index)]
+		if alreadyTold {
+			s.log.Printf("Telling index %d twice that I am ready", index)
+			rw.WriteHeader(http.StatusBadRequest)
+			_, err := io.WriteString(rw, fmt.Sprintf("Index %d was already told to stop", index))
+			logIfNotNil(err, "Cannot write response to client")
+			return
+		}
+		s.indexIsReady[int(index)] = struct{}{}
 		return
 	}
 	select {
@@ -145,6 +160,8 @@ func (j *circleTasker) flagInit() error {
 	j.flags.IntVar(&j.nodeIndex, "node_index", int(nodeIndex), "Index of the node we're building")
 	j.flags.StringVar(&j.sourceHost, "source_host", "node0", "Source host to get information from")
 	j.flags.StringVar(&j.listenHost, "listenhost", "0.0.0.0:2121", "Listen addr if a server")
+	j.flags.DurationVar(&j.client.Timeout, "timeout", time.Second * 30, "Timeout waiting for HTTP responses")
+	j.flags.DurationVar(&j.readyTimeout, "ready_timeout", time.Minute * 5, "Timeout waiting for ready signal")
 	j.flags.IntVar(&j.portNumber, "port", 2121, "Port to use for connections")
 	j.log = log.New(j.logOut, "[circletasker]", log.LstdFlags)
 	return j.flags.Parse(j.args)
@@ -211,11 +228,40 @@ func (j *circleTasker) serve() error {
 		log:            j.log,
 		maxClientIndex: j.nodeTotal,
 		haveToldDone:   make(map[int]struct{}),
+		indexIsReady: make(map[int]struct{}),
 		listening:      j.listening,
 	}
 	ss.doneWaitGroup.Add(j.nodeTotal)
 	j.log.Println("Starting server")
 	return ss.start()
+}
+
+func (j *circleTasker) ready() error {
+	now := time.Now()
+	for {
+		req, err := http.NewRequest("HEAD", fmt.Sprintf("http://%s:%d", j.sourceHost, j.portNumber), nil)
+		if err != nil {
+			return err
+		}
+		// 5 minute timeout on client requests
+		req.Header.Add(sourceIndexHeader, strconv.FormatInt(int64(j.nodeIndex), 10))
+		resp, err := j.client.Do(req)
+		if err != nil {
+			if time.Now().Sub(now).Nanoseconds() <= j.readyTimeout.Nanoseconds() {
+				continue
+			}
+		}
+		defer func() {
+			logIfNotNil(resp.Body.Close(), "cannot close client response body")
+		}()
+		if resp.StatusCode == http.StatusOK {
+			return nil
+		}
+		b, err := ioutil.ReadAll(resp.Body)
+		logIfNotNil(err, "Cannot read from response body")
+		j.log.Println(string(b))
+		return fmt.Errorf("invalid status code %d", resp.StatusCode)
+	}
 }
 
 func (j *circleTasker) main() error {
@@ -232,6 +278,7 @@ func (j *circleTasker) main() error {
 	cmdMap := map[string]func() error{
 		"serve": j.serve,
 		"next":  j.next,
+		"ready": j.ready,
 	}
 
 	f, exists := cmdMap[cmd]
