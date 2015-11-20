@@ -15,7 +15,7 @@ func TestServer(t *testing.T) {
 	done.Add(1)
 	server := circleTasker{
 		flags:     flag.NewFlagSet(os.Args[0], flag.ExitOnError),
-		args:      []string{"-listenhost", "localhost:"+freePort, "serve"},
+		args:      []string{"-listenhost", "localhost:" + freePort, "serve"},
 		out:       &bytes.Buffer{},
 		readFrom:  strings.NewReader("hello\nworld"),
 		logOut:    &bytes.Buffer{},
@@ -29,7 +29,7 @@ func TestServer(t *testing.T) {
 		done.Done()
 	}()
 	done.Add(1)
-	
+
 	readyLoop := func() {
 		client := circleTasker{
 			flags:    flag.NewFlagSet(os.Args[0], flag.ExitOnError),

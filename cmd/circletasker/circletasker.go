@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,21 +27,22 @@ type circleTasker struct {
 	log      *log.Logger
 	readFrom io.Reader
 
-	nodeTotal  int
-	nodeIndex  int
-	sourceHost string
-	listenHost string
+	nodeTotal    int
+	nodeIndex    int
+	runRes       string
+	sourceHost   string
+	listenHost   string
 	readyTimeout time.Duration
-	client     http.Client
-	listening  chan struct{}
-	out        io.Writer
-	logOut     io.Writer
+	client       http.Client
+	listening    chan struct{}
+	out          io.Writer
+	logOut       io.Writer
 }
 
 type splitServer struct {
 	listenHost     string
 	listening      chan struct{}
-	partsToServe   <-chan string
+	partsToServe   []string
 	log            *log.Logger
 	maxClientIndex int
 
@@ -47,7 +50,15 @@ type splitServer struct {
 	haveToldDone  map[int]struct{}
 	doneWaitGroup sync.WaitGroup
 	mu            sync.Mutex
-	indexIsReady map[int]struct{}
+	indexIsReady  map[int]struct{}
+
+	processResults   map[string]time.Duration
+	processStartTime map[int]startTime
+}
+
+type startTime struct {
+	sentItem string
+	sendTime time.Time
 }
 
 const sourceIndexHeader = "X-index"
@@ -81,29 +92,39 @@ func (s *splitServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		s.indexIsReady[int(index)] = struct{}{}
 		return
 	}
-	select {
-	case toRet := <-s.partsToServe:
+	now := time.Now()
+	lastItem, exists := s.processStartTime[int(index)]
+	if exists {
+		s.processResults[lastItem.sentItem] = now.Sub(lastItem.sendTime)
+		delete(s.processStartTime, int(index))
+	}
+	if len(s.partsToServe) != 0 {
+		var toRet string
+		toRet, s.partsToServe = s.partsToServe[0], s.partsToServe[1:]
 		s.log.Printf("%s -> %d", toRet, index)
 		_, err := io.WriteString(rw, toRet)
 		logIfNotNil(err, "Cannot write response to client")
-	default:
-		_, alreadyTold := s.haveToldDone[int(index)]
-		if alreadyTold {
-			s.log.Printf("Telling index %d twice", index)
-			rw.WriteHeader(http.StatusBadRequest)
-			_, err := io.WriteString(rw, fmt.Sprintf("Index %d was already told to stop", index))
-			logIfNotNil(err, "Cannot write response to client")
-			return
+		s.processStartTime[int(index)] = startTime{
+			sentItem: toRet,
+			sendTime: now,
 		}
-		s.haveToldDone[int(index)] = struct{}{}
-		s.log.Printf("Done: %d", index)
-		rw.WriteHeader(http.StatusNoContent)
-		if f, ok := rw.(http.Flusher); ok {
-			f.Flush()
-		}
-		s.doneWaitGroup.Done()
 		return
 	}
+	_, alreadyTold := s.haveToldDone[int(index)]
+	if alreadyTold {
+		s.log.Printf("Telling index %d twice", index)
+		rw.WriteHeader(http.StatusBadRequest)
+		_, err := io.WriteString(rw, fmt.Sprintf("Index %d was already told to stop", index))
+		logIfNotNil(err, "Cannot write response to client")
+		return
+	}
+	s.haveToldDone[int(index)] = struct{}{}
+	s.log.Printf("Done: %d", index)
+	rw.WriteHeader(http.StatusNoContent)
+	if f, ok := rw.(http.Flusher); ok {
+		f.Flush()
+	}
+	s.doneWaitGroup.Done()
 }
 
 func (s *splitServer) start() error {
@@ -158,10 +179,12 @@ func (j *circleTasker) flagInit() error {
 		}
 	}
 	j.flags.IntVar(&j.nodeIndex, "node_index", int(nodeIndex), "Index of the node we're building")
+
+	j.flags.StringVar(&j.runRes, "run_res", filepath.Join(os.Getenv("CIRCLE_ARTIFACTS"), "circletasker.json"), "Filename to store results into")
 	j.flags.StringVar(&j.sourceHost, "source_host", "localhost", "Source host to get information from")
 	j.flags.StringVar(&j.listenHost, "listenhost", "0.0.0.0:12012", "Listen addr if a server")
-	j.flags.DurationVar(&j.client.Timeout, "timeout", time.Second * 30, "Timeout waiting for HTTP responses")
-	j.flags.DurationVar(&j.readyTimeout, "ready_timeout", time.Minute * 5, "Timeout waiting for ready signal")
+	j.flags.DurationVar(&j.client.Timeout, "timeout", time.Second*30, "Timeout waiting for HTTP responses")
+	j.flags.DurationVar(&j.readyTimeout, "ready_timeout", time.Minute*5, "Timeout waiting for ready signal")
 	j.flags.IntVar(&j.portNumber, "port", 12012, "Port to use for connections")
 	j.log = log.New(j.logOut, "[circletasker]", log.LstdFlags)
 	return j.flags.Parse(j.args)
@@ -217,20 +240,31 @@ func (j *circleTasker) serve() error {
 			break
 		}
 	}
-	s := make(chan string, len(allLines))
-	for _, l := range allLines {
-		s <- strings.TrimSpace(l)
+	for idx, l := range allLines {
+		allLines[idx] = strings.TrimSpace(l)
 	}
-	j.log.Printf("Read %d lines\n", len(s))
+	j.log.Printf("Read %d lines\n", len(allLines))
 	ss := splitServer{
-		listenHost:     j.listenHost,
-		partsToServe:   s,
-		log:            j.log,
-		maxClientIndex: j.nodeTotal,
-		haveToldDone:   make(map[int]struct{}),
-		indexIsReady: make(map[int]struct{}),
-		listening:      j.listening,
+		listenHost:       j.listenHost,
+		partsToServe:     allLines,
+		log:              j.log,
+		maxClientIndex:   j.nodeTotal,
+		haveToldDone:     make(map[int]struct{}),
+		indexIsReady:     make(map[int]struct{}),
+		listening:        j.listening,
+		processStartTime: make(map[int]startTime, j.nodeTotal),
+		processResults:   make(map[string]time.Duration, len(allLines)),
 	}
+	writeInto, err := os.Create(j.runRes)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		logIfNotNil(writeInto.Close(), "Cannot close/flush results file")
+	}()
+	defer func() {
+		logIfNotNil(json.NewEncoder(writeInto).Encode(ss.processResults), "Cannot encode JSON process times")
+	}()
 	ss.doneWaitGroup.Add(j.nodeTotal)
 	j.log.Println("Starting server")
 	return ss.start()
