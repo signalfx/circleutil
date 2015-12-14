@@ -21,6 +21,11 @@ function print_time() {
   echo "==PRINT_TIME $(date +%s) $(date) == $1"
 }
 
+# import a gpg key
+function setup_gpg () {
+  gpg --quiet --import "$1"
+}
+
 # Clone $1 into $2 and rebase a git repository
 # Then checkout to revision $3
 function clone_repo() {
