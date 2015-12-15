@@ -104,6 +104,7 @@ function install_go_version() {
   fi
   [ -a "$GOROOT" ] && (mv "$GOROOT" "${GOROOT}_backup" || rm "$GOROOT")
   ln -s "$1/go$2/go" "$GOROOT"
+  go version | grep "$2"
 }
 
 function install_all_go_versions() {
@@ -111,10 +112,10 @@ function install_all_go_versions() {
     echo "Unknown directory $1"
     return 1
   fi
+  install_go_version "$1" 1.5.2
   install_go_version "$1" 1.3.3
   install_go_version "$1" 1.4.3
   install_go_version "$1" 1.5.1
-  install_go_version "$1" 1.5.2
 }
 
 function install_shellcheck() {
