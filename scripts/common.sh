@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # Common bash functions unsed in circle scripts
 
@@ -113,6 +114,7 @@ function install_all_go_versions() {
   install_go_version "$1" 1.3.3
   install_go_version "$1" 1.4.3
   install_go_version "$1" 1.5.1
+  install_go_version "$1" 1.5.2
 }
 
 function install_shellcheck() {
@@ -208,4 +210,10 @@ function versioned_goget() {
   done
   mkdir -p "$GOPATH_INTO"
   cp "$TMP_GOPATH/bin/"* "$GOPATH_INTO/"
+}
+
+function split_string() {
+  for PART in $1; do
+    echo "$PART"
+  done
 }
