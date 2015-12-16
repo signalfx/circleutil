@@ -122,7 +122,11 @@ function install_shellcheck() {
   INSTALL_DIR=${1-$HOME/bin}
   if [ ! -f "$INSTALL_DIR/shellcheck" ]; then
     mkdir -p "$INSTALL_DIR"
-    SHELLCHECK_VERSION="0.3.7-4"
+    
+    if [ -z ${SHELLCHECK_VERSION+x} ]; then
+      SHELLCHECK_VERSION="0.3.7-5"
+    fi
+    
     wget http://ftp.debian.org/debian/pool/main/s/shellcheck/shellcheck_${SHELLCHECK_VERSION}_amd64.deb
     dpkg -x shellcheck_${SHELLCHECK_VERSION}_amd64.deb "/tmp/shellcheck"
     cp "/tmp/shellcheck/usr/bin/shellcheck" "$INSTALL_DIR/shellcheck"
