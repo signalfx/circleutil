@@ -124,7 +124,7 @@ function install_shellcheck() {
     mkdir -p "$INSTALL_DIR"
     
     if [ -z ${SHELLCHECK_VERSION+x} ]; then
-      SHELLCHECK_VERSION="0.3.7-5"
+      SHELLCHECK_VERSION="0.3.4-3"
     fi
     
     wget http://ftp.debian.org/debian/pool/main/s/shellcheck/shellcheck_${SHELLCHECK_VERSION}_amd64.deb
