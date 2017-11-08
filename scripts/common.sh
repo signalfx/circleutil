@@ -112,10 +112,10 @@ function install_all_go_versions() {
     echo "Unknown directory $1"
     return 1
   fi
-  install_go_version "$1" 1.5.2
-  install_go_version "$1" 1.3.3
-  install_go_version "$1" 1.4.3
   install_go_version "$1" 1.5.1
+  install_go_version "$1" 1.6.1
+  install_go_version "$1" 1.7.1
+  install_go_version "$1" 1.8.1
 }
 
 function install_shellcheck() {
@@ -124,7 +124,7 @@ function install_shellcheck() {
     mkdir -p "$INSTALL_DIR"
     
     if [ -z ${SHELLCHECK_VERSION+x} ]; then
-      SHELLCHECK_VERSION="0.3.4-3"
+      SHELLCHECK_VERSION="0.4.6-1"
     fi
     
     wget http://ftp.debian.org/debian/pool/main/s/shellcheck/shellcheck_${SHELLCHECK_VERSION}_amd64.deb
